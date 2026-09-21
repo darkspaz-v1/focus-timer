@@ -1,4 +1,5 @@
 import json
+import logging
 import msvcrt
 import queue
 import threading
@@ -13,6 +14,7 @@ from winotify import Notification, audio
 
 from foreground import get_foreground_info, is_distracting
 from icon import app_icon
+from log_setup import setup_logging
 from timer import FOCUS, IDLE, LONG_BREAK, PHASE_LABELS, SHORT_BREAK, PomodoroTimer, nudge_decision
 
 APP_DIR = Path(__file__).parent
@@ -20,6 +22,7 @@ CONFIG_PATH = APP_DIR / "config.json"
 LOCK_PATH = APP_DIR / ".singleton.lock"
 SHOW_SIGNAL_PATH = APP_DIR / ".show_signal"
 _lock_file = None
+log = logging.getLogger("focus-timer")
 
 INK = "#12131C"
 PANEL = "#1B1D2B"
@@ -60,8 +63,9 @@ def _acquire_single_instance_lock():
         f.close()
         try:
             SHOW_SIGNAL_PATH.touch()
-        except OSError:
-            pass
+        except OSError as e:
+            # Best effort: the second instance is exiting anyway; the user just won't see the window.
+            log.debug("could not write show-signal file: %s", e)
         return False
     _lock_file = f
     return True
@@ -96,7 +100,9 @@ def notify(title, message):
         toast.set_audio(audio.Default, loop=False)
         toast.show()
     except Exception:
-        pass
+        # Best-effort toast, called from the Tk tick loop: whatever winotify/PowerShell throws
+        # must never stop the timer, so keep this broad and just record it.
+        log.warning("could not show notification %r", title, exc_info=True)
 
 
 PHASE_COLORS = {
@@ -148,8 +154,9 @@ class FocusTimerApp:
         if SHOW_SIGNAL_PATH.exists():
             try:
                 SHOW_SIGNAL_PATH.unlink()
-            except OSError:
-                pass
+            except OSError as e:
+                # Best effort: worst case the window is raised again on the next tick.
+                log.debug("could not remove show-signal file: %s", e)
             self.root.deiconify()
             self.root.lift()
         self.root.after(50, self._drain_ui_queue)
@@ -389,9 +396,11 @@ def main():
 
 
 if __name__ == "__main__":
+    setup_logging()
     try:
         main()
     except Exception:
+        log.exception("fatal error")
         import traceback
 
         with open(APP_DIR / "app_error.log", "a", encoding="utf-8") as f:
