@@ -13,7 +13,7 @@ from winotify import Notification, audio
 
 from foreground import get_foreground_info, is_distracting
 from icon import app_icon
-from timer import FOCUS, IDLE, LONG_BREAK, SHORT_BREAK, PHASE_LABELS, PomodoroTimer
+from timer import FOCUS, IDLE, LONG_BREAK, PHASE_LABELS, SHORT_BREAK, PomodoroTimer, nudge_decision
 
 APP_DIR = Path(__file__).parent
 CONFIG_PATH = APP_DIR / "config.json"
@@ -295,20 +295,21 @@ class FocusTimerApp:
     def _check_loop(self):
         if self._stop.is_set():
             return
+        distracting = False
         if self.timer.state == FOCUS and not self.timer.paused:
             process_name, title = get_foreground_info()
             distracting = is_distracting(process_name, title, self.config)
-            if distracting and not self._was_distracting:
-                self.timer.register_distraction()
-                self._flash_border()
-                # deiconify first - lift() on a withdrawn (tray-hidden) window is a
-                # silent no-op, so without this the nudge would never actually be seen.
-                self.root.deiconify()
-                self.root.lift()
-                self._refresh_display()
-            self._was_distracting = distracting
-        else:
-            self._was_distracting = False
+        nudge, self._was_distracting = nudge_decision(
+            self.timer.state, self.timer.paused, distracting, self._was_distracting
+        )
+        if nudge:
+            self.timer.register_distraction()
+            self._flash_border()
+            # deiconify first - lift() on a withdrawn (tray-hidden) window is a
+            # silent no-op, so without this the nudge would never actually be seen.
+            self.root.deiconify()
+            self.root.lift()
+            self._refresh_display()
         self.root.after(self.config["check_interval_seconds"] * 1000, self._check_loop)
 
     def _flash_border(self):

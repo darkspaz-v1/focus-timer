@@ -94,3 +94,15 @@ class PomodoroTimer:
     def format_time(seconds):
         seconds = max(0, int(seconds))
         return f"{seconds // 60:02d}:{seconds % 60:02d}"
+
+
+def nudge_decision(state, paused, distracting, was_distracting):
+    """Distraction-nudge rule, kept pure so it can be tested. Returns
+    (should_nudge, new_was_distracting). Only an unpaused FOCUS block can nudge, and
+    only on the edge from not-distracting to distracting - staying on the same
+    distracting window must not re-nudge every check. Outside a focus block the
+    edge memory resets, so opening a distracting window during a break and then
+    starting focus with it still open nudges once."""
+    if state == FOCUS and not paused:
+        return distracting and not was_distracting, distracting
+    return False, False
