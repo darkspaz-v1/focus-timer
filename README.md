@@ -4,6 +4,8 @@
 
 A Pomodoro timer that nudges instead of enforcing.
 
+![Focus Timer widget mid-focus-block, showing a 24:21 countdown in the FOCUS phase with pause, skip, and reset controls](docs/media/screenshot.png)
+
 ## How it works
 
 - Always-on-top widget. Configurable work / short break / long break, defaulting to 25 / 5 / 15 minutes.
@@ -42,7 +44,7 @@ framework — the only thing they share is a set of conventions.
 | Config lives in `config.json`, read at startup | Edit it, then fully exit the tray icon and relaunch — a running process never re-reads it |
 | Tray icon generated in code (`icon.py`) | No binary asset to keep in sync |
 
-## Install and run
+## Quick start
 
 ```
 python -m venv venv
