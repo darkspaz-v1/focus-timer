@@ -17,6 +17,12 @@ create an adversarial relationship with your own tooling: you end up disabling t
 it protects nothing. A nudge that is easy to ignore gets left switched on, which makes it the option
 that actually runs.
 
+**Known quirk:** hitting **skip** during a focus block counts that block as completed, exactly like
+letting it run out — the cycle counter and long-break schedule advance either way. This is a known,
+deliberately-unfixed behavior, not an oversight: the state machine doesn't distinguish *how* a focus
+block ended, only that one ended. If you skip through blocks, the cycle counter will say you focused
+when you didn't.
+
 The work-duration control was revised twice after real use — config-file only, then +/- buttons, then
 a typeable minutes field, which is what it has now. The first two were too slow to change mid-session,
 so the timer got closed instead of adjusted.
