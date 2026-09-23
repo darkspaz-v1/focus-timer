@@ -4,6 +4,8 @@
 
 A Pomodoro timer that nudges instead of enforcing.
 
+![Focus Timer preview](docs/images/focus-timer-preview.png)
+
 ![Focus Timer widget mid-focus-block, showing a 24:21 countdown in the FOCUS phase with pause, skip, and reset controls](docs/media/screenshot.png)
 
 ## How it works
